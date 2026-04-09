@@ -73,7 +73,6 @@
         }
         #search:focus { border-color: var(--apple-blue); box-shadow: 0 0 0 4px rgba(0,113,227,0.1); }
 
-        /* YAN YANA (ROW) VE OKUNAKLI YAPI */
         .grid {
             display: flex;
             flex-wrap: wrap;
@@ -83,15 +82,14 @@
         }
 
         .card {
-            /* Genişliği biraz daralttım, yan yana daha fazla sığar ve derli toplu durur */
             width: calc(11.11% - 9px); 
             background: var(--apple-card); 
             border-radius: 10px; 
-            padding: 12px 14px; /* Boşluklar artırıldı */
+            padding: 12px 14px;
             text-decoration: none; 
             color: inherit; 
             display: flex; 
-            flex-direction: column; /* Yazılar alt alta daha okunaklı */
+            flex-direction: column;
             gap: 6px;
             border: 1px solid #d2d2d7;
             transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
@@ -115,7 +113,7 @@
 
         .name { 
             font-weight: 700; 
-            font-size: 14px; /* Yazı büyütüldü */
+            font-size: 14px; 
             white-space: nowrap; 
             overflow: hidden; 
             text-overflow: ellipsis; 
@@ -137,7 +135,6 @@
         .reset-btn { font-size: 20px; cursor: pointer; color: var(--apple-gray); border: none; background: none; transition: 0.2s; }
         .reset-btn:hover { color: var(--apple-text); transform: rotate(-90deg); }
 
-        /* RESPONSIVE AYARLARI */
         @media (max-width: 1800px) { .card { width: calc(12.5% - 9px); } }
         @media (max-width: 1500px) { .card { width: calc(14.28% - 9px); } }
         @media (max-width: 1200px) { .card { width: calc(16.66% - 9px); } }
@@ -149,7 +146,11 @@
 </head>
 <body>
 
-<div class="container">
+<video id="preventSleepVideo" loop muted autoplay playsinline style="position:fixed; bottom:0; right:0; width:1px; height:1px; opacity:0.01; z-index:-1;">
+    <source src="data:video/mp4;base64,AAAAIGZ0eXBpc29tAAACAGlzb21pc29yYXZjMQAAAAhmcmVlAAAALW1kYXTeBAAAbGlieDI2NCAteDI2NCAcoreID68G/78m+88m/88m/88m/88m+88m+8=" type="video/mp4">
+</video>
+
+<div class="container" id="mainContainer">
     <header>
         <div class="logo">
             <span class="brand">KAYA</span>
@@ -229,6 +230,32 @@
     let tiklananlar = JSON.parse(localStorage.getItem('kaya_30s_full_clicks')) || [];
     let isAutoOn = true;
     let scanTimer;
+    let wakeLock = null;
+
+    // --- EK: EKRAN KORUYUCU ENGELLEYİCİ FONKSİYONLAR ---
+    async function activateWakeLock() {
+        try {
+            if ('wakeLock' in navigator) {
+                wakeLock = await navigator.wakeLock.request('screen');
+            }
+        } catch (err) { console.log("WakeLock Hatası:", err); }
+    }
+
+    function keepAlive() {
+        // Fare hareketi simülasyonu
+        window.dispatchEvent(new MouseEvent('mousemove'));
+        // Video oynatımı kontrolü
+        const v = document.getElementById('preventSleepVideo');
+        if (v && v.paused) v.play();
+        console.log("TV Dürtüldü: Saat gelmeyecek.");
+    }
+
+    function toggleFullscreen() {
+        if (!document.fullscreenElement) {
+            document.documentElement.requestFullscreen().catch(e => console.log(e));
+        }
+    }
+    // --- SON ---
 
     function render() {
         document.getElementById('total-count').innerText = veriler.length + " MAĞAZA";
@@ -315,9 +342,21 @@
         });
     }
 
+    // İlk Çalıştırma
     render();
     autoScan();
     scanTimer = setInterval(autoScan, 30000);
+    
+    // Engelleyiciyi başlat
+    activateWakeLock();
+    setInterval(keepAlive, 25000); // 25 saniyede bir dürt
+
+    // TV için ekrana ilk tıklandığında hem WakeLock tazele hem tam ekrana geç
+    document.addEventListener('click', () => {
+        activateWakeLock();
+        toggleFullscreen();
+    }, { once: false });
+
 </script>
 </body>
 </html>
