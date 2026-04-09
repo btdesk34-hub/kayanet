@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>KAYA Ruijie Net | Pro</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --apple-bg: #f5f5f7;
+            --apple-card: #ffffff;
+            --apple-text: #1d1d1f;
+            --apple-blue: #0071e3;
+            --apple-gray: #86868b;
+            --online: #28cd41;
+            --offline: #ff3b30;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; -webkit-font-smoothing: antialiased; }
+
+        body { 
+            font-family: 'Inter', -apple-system, sans-serif; 
+            background-color: var(--apple-bg); color: var(--apple-text);
+            padding: 10px;
+        }
+
+        .container { width: 100%; max-width: 100%; margin: 0 auto; }
+
+        header {
+            display: grid;
+            grid-template-columns: 1fr auto 1fr;
+            align-items: center;
+            padding: 10px;
+            margin-bottom: 10px;
+        }
+
+        .logo { grid-column: 2; text-align: center; }
+        .logo .brand { 
+            font-size: 26px; 
+            font-weight: 800; 
+            letter-spacing: -1px; 
+            color: var(--apple-blue); 
+        }
+        .logo .sub { font-size: 10px; font-weight: 700; color: var(--apple-gray); text-transform: uppercase; letter-spacing: 3px; display: block; margin-top: -3px; }
+        
+        .shop-count {
+            font-size: 11px;
+            font-weight: 800;
+            color: #ffffff;
+            background: var(--apple-text);
+            padding: 2px 10px;
+            border-radius: 20px;
+            display: inline-block;
+            margin-top: 5px;
+        }
+
+        .header-controls { grid-column: 3; justify-self: end; display: flex; align-items: center; gap: 10px; }
+
+        .toggle-container {
+            display: flex; align-items: center; gap: 6px;
+            background: #e5e5ea; padding: 6px 12px; border-radius: 20px;
+            cursor: pointer; transition: 0.3s;
+        }
+        .toggle-container.active { background: #34c759; color: white; }
+        .toggle-text { font-size: 11px; font-weight: 700; }
+
+        .search-area { margin-bottom: 15px; padding: 0 10px; }
+        #search {
+            width: 100%; padding: 14px 20px; border-radius: 12px;
+            border: 1px solid #d2d2d7; background: var(--apple-card);
+            font-size: 16px; outline: none; transition: 0.2s;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+        }
+        #search:focus { border-color: var(--apple-blue); box-shadow: 0 0 0 4px rgba(0,113,227,0.1); }
+
+        /* YAN YANA (ROW) VE OKUNAKLI YAPI */
+        .grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            padding: 5px;
+            justify-content: flex-start;
+        }
+
+        .card {
+            /* Genişliği biraz daralttım, yan yana daha fazla sığar ve derli toplu durur */
+            width: calc(11.11% - 9px); 
+            background: var(--apple-card); 
+            border-radius: 10px; 
+            padding: 12px 14px; /* Boşluklar artırıldı */
+            text-decoration: none; 
+            color: inherit; 
+            display: flex; 
+            flex-direction: column; /* Yazılar alt alta daha okunaklı */
+            gap: 6px;
+            border: 1px solid #d2d2d7;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        .card:hover { 
+            transform: translateY(-2px); 
+            z-index: 10; 
+            border-color: var(--apple-blue); 
+            box-shadow: 0 8px 20px rgba(0,0,0,0.08); 
+        }
+
+        .card-top { display: flex; align-items: center; justify-content: space-between; width: 100%; }
+
+        .dot { width: 10px; height: 10px; border-radius: 50%; background: #c5c5c7; flex-shrink: 0; }
+        .online { background: var(--online); box-shadow: 0 0 8px var(--online); }
+        .offline { background: var(--offline); box-shadow: 0 0 8px var(--offline); }
+        .checking { background: #ff9500; animation: blink 1s infinite; }
+
+        @keyframes blink { 50% { opacity: 0.4; } }
+
+        .name { 
+            font-weight: 700; 
+            font-size: 14px; /* Yazı büyütüldü */
+            white-space: nowrap; 
+            overflow: hidden; 
+            text-overflow: ellipsis; 
+            color: var(--apple-text);
+        }
+
+        .ip-badge { 
+            font-size: 10px; 
+            font-weight: 700; 
+            color: var(--apple-gray); 
+            background: #f2f2f7; 
+            padding: 3px 6px; 
+            border-radius: 5px;
+            align-self: flex-start;
+        }
+
+        .card.visited { opacity: 0.4; filter: grayscale(1); border-style: dashed; }
+
+        .reset-btn { font-size: 20px; cursor: pointer; color: var(--apple-gray); border: none; background: none; transition: 0.2s; }
+        .reset-btn:hover { color: var(--apple-text); transform: rotate(-90deg); }
+
+        /* RESPONSIVE AYARLARI */
+        @media (max-width: 1800px) { .card { width: calc(12.5% - 9px); } }
+        @media (max-width: 1500px) { .card { width: calc(14.28% - 9px); } }
+        @media (max-width: 1200px) { .card { width: calc(16.66% - 9px); } }
+        @media (max-width: 1000px) { .card { width: calc(20% - 9px); } }
+        @media (max-width: 800px) { .card { width: calc(25% - 9px); } }
+        @media (max-width: 600px) { .card { width: calc(33.33% - 9px); } }
+        @media (max-width: 450px) { .card { width: calc(50% - 9px); } }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <header>
+        <div class="logo">
+            <span class="brand">KAYA</span>
+            <span class="sub">Ruijie Net</span>
+            <div id="total-count" class="shop-count">...</div>
+        </div>
+        <div class="header-controls">
+            <button class="reset-btn" title="Temizle" onclick="tiklamalariSifirla()">↺</button>
+            <div id="toggleBtn" class="toggle-container active" onclick="toggleAuto()">
+                <span class="toggle-text" id="toggleLabel">OTO: 30S</span>
+            </div>
+        </div>
+    </header>
+
+    <div class="search-area">
+        <input type="text" id="search" placeholder="Şube ismi veya IP yazın..." onkeyup="ara()">
+    </div>
+
+    <div class="grid" id="liste"></div>
+</div>
+
+<script>
+    const veriler = [
+        {ip: "192.168.104.1", isim: "İnegöl"}, {ip: "192.168.34.1", isim: "Bilecik"},
+        {ip: "192.168.113.1", isim: "Edremit"}, {ip: "192.168.79.1", isim: "Ereğli"},
+        {ip: "192.168.81.1", isim: "Karabük"}, {ip: "192.168.71.1", isim: "Zonguldak 1"},
+        {ip: "192.168.74.1", isim: "Bartın"}, {ip: "192.168.23.1", isim: "Merzifon"},
+        {ip: "192.168.28.1", isim: "Ordu 1"}, {ip: "192.168.161.1", isim: "Ordu 2"},
+        {ip: "192.168.26.1", isim: "Ordu 3"}, {ip: "192.168.123.1", isim: "Ünye"},
+        {ip: "192.168.66.1", isim: "Yozgat Sorgun"}, {ip: "192.168.82.1", isim: "Çarşamba"},
+        {ip: "192.168.27.1", isim: "Atakum"}, {ip: "192.168.86.1", isim: "Giresun"},
+        {ip: "192.168.43.1", isim: "Gemlik"}, {ip: "192.168.55.1", isim: "Samsun"},
+        {ip: "192.168.139.1", isim: "Bolu Merkez"}, {ip: "192.168.83.1", isim: "İzmit Konak"},
+        {ip: "192.168.25.1", isim: "Samandıra 1"}, {ip: "192.168.107.1", isim: "Samandıra 2"},
+        {ip: "192.168.102.1", isim: "Çekmeköy"}, {ip: "192.168.101.1", isim: "Bakkalköy 1"},
+        {ip: "192.168.6.1", isim: "Okmeydanı 1"}, {ip: "192.168.29.1", isim: "Ayazağa"},
+        {ip: "192.168.164.1", isim: "Avcılar"}, {ip: "192.168.31.1", isim: "Bakkalköy 2"},
+        {ip: "192.168.12.1", isim: "Sancaktepe 1"}, {ip: "192.168.5.1", isim: "Çeliktepe"},
+        {ip: "192.168.7.1", isim: "Kulaksız"}, {ip: "192.168.24.1", isim: "Çamlık"},
+        {ip: "192.168.103.1", isim: "Ihlamurkuyu"}, {ip: "192.168.163.1", isim: "Fındıklı 2"},
+        {ip: "192.168.97.1", isim: "Fındıklı 1"}, {ip: "192.168.106.1", isim: "Esenler"},
+        {ip: "192.168.92.1", isim: "İzmit 2"}, {ip: "192.168.51.1", isim: "Körfez"},
+        {ip: "192.168.40.1", isim: "Valikonağı"}, {ip: "192.168.100.1", isim: "Kayışdağı"},
+        {ip: "192.168.125.1", isim: "Paşabahçe"}, {ip: "192.168.39.1", isim: "Kaynarca"},
+        {ip: "192.168.22.1", isim: "Edirne"}, {ip: "192.168.16.1", isim: "Tekirdağ"},
+        {ip: "192.168.166.1", isim: "Kurtköy"}, {ip: "192.168.8.1", isim: "Bekirpaşa"},
+        {ip: "192.168.116.1", isim: "Sancaktepe 2"}, {ip: "192.168.122.1", isim: "Uğur Mumcu"},
+        {ip: "192.168.80.1", isim: "Yakacık"}, {ip: "192.168.128.1", isim: "Zümrütevler"},
+        {ip: "192.168.126.1", isim: "İzmit Yuvam"}, {ip: "192.168.133.1", isim: "Kurfalı"},
+        {ip: "192.168.72.1", isim: "İçerenköy"}, {ip: "192.168.67.1", isim: "Yeşilpınar"},
+        {ip: "192.168.11.1", isim: "Sultanbeyli 1"}, {ip: "192.168.115.1", isim: "Keşan 2"},
+        {ip: "192.168.89.1", isim: "Kapaklı 1"}, {ip: "192.168.95.1", isim: "Kayaşehir"},
+        {ip: "192.168.73.1", isim: "Sultanbeyli 3"}, {ip: "192.168.20.1", isim: "Gebze"},
+        {ip: "192.168.129.1", isim: "Karamürsel"}, {ip: "192.168.37.1", isim: "Darıca"},
+        {ip: "192.168.100.1", isim: "Yenisahra"}, {ip: "192.168.52.1", isim: "Altmışevler"},
+        {ip: "192.168.75.1", isim: "Sarıyer"}, {ip: "192.168.13.1", isim: "Yenidoğan 1"},
+        {ip: "192.168.127.1", isim: "Silivri"}, {ip: "192.168.41.1", isim: "Çağlayan"},
+        {ip: "192.168.9.1", isim: "Yenidoğan 2"}, {ip: "192.168.35.1", isim: "Levent 3"},
+        {ip: "192.168.49.1", isim: "Gölcük"}, {ip: "192.168.121.1", isim: "Küçükköy"},
+        {ip: "192.168.57.1", isim: "Değirmendere"}, {ip: "192.168.38.1", isim: "Arnavutköy"},
+        {ip: "192.168.98.1", isim: "Sultangazi"}, {ip: "192.168.18.1", isim: "Keşan 1"},
+        {ip: "192.168.105.1", isim: "Levent 2"}, {ip: "192.168.120.1", isim: "Levent 4"},
+        {ip: "192.168.134.1", isim: "Soğanlık 2"}, {ip: "192.168.36.1", isim: "Akyazı Yeni"},
+        {ip: "192.168.68.1", isim: "Çerkezköy 1"}, {ip: "192.168.111.1", isim: "Çerkezköy 2"},
+        {ip: "192.168.21.1", isim: "Çorlu 2"}, {ip: "192.168.58.1", isim: "Çorlu 3"},
+        {ip: "192.168.3.1", isim: "Levent 1"}, {ip: "192.168.112.1", isim: "Bağcılar 1"},
+        {ip: "192.168.124.1", isim: "Soğanlık 1"}, {ip: "192.168.19.1", isim: "Çorlu 1"},
+        {ip: "192.168.131.1", isim: "Bağcılar 2"}, {ip: "192.168.14.1", isim: "Küçükçekmece"},
+        {ip: "192.168.17.1", isim: "Sultanbeyli 5"}, {ip: "192.168.117.1", isim: "Kapaklı 2"},
+        {ip: "192.168.94.1", isim: "Gaziosmanpaşa 1"}, {ip: "192.168.15.1", isim: "Cevizli"},
+        {ip: "192.168.4.1", isim: "Güneşli"}, {ip: "192.168.33.1", isim: "Bayrampaşa"},
+        {ip: "192.168.63.1", isim: "Gaziosmanpaşa 2"}, {ip: "192.168.30.1", isim: "Kayışdağı 2"},
+        {ip: "192.168.78.1", isim: "Düzce"}, {ip: "192.168.132.1", isim: "Ümraniye FSM"},
+        {ip: "192.168.119.1", isim: "Yarımca"}
+    ];
+
+    let tiklananlar = JSON.parse(localStorage.getItem('kaya_30s_full_clicks')) || [];
+    let isAutoOn = true;
+    let scanTimer;
+
+    function render() {
+        document.getElementById('total-count').innerText = veriler.length + " MAĞAZA";
+        const sirali = [...veriler].sort((a, b) => a.isim.localeCompare(b.isim, 'tr'));
+        const grid = document.getElementById('liste');
+        grid.innerHTML = "";
+        
+        sirali.forEach((m, i) => {
+            const visited = tiklananlar.includes(m.isim) ? 'visited' : '';
+            grid.innerHTML += `
+                <a href="http://${m.ip}" target="_blank" class="card ${visited}" onclick="saveClick(event, '${m.isim}')" data-ip="${m.ip}" data-id="dot-${i}">
+                    <div class="card-top">
+                        <span class="name">${m.isim}</span>
+                        <div class="dot" id="dot-${i}"></div>
+                    </div>
+                    <span class="ip-badge">${m.ip.split('.').slice(2).join('.')}</span>
+                </a>`;
+        });
+    }
+
+    function toggleAuto() {
+        const btn = document.getElementById('toggleBtn');
+        const label = document.getElementById('toggleLabel');
+        isAutoOn = !isAutoOn;
+        if(isAutoOn) {
+            btn.classList.add('active');
+            label.innerText = "OTO: 30S";
+            autoScan();
+            scanTimer = setInterval(autoScan, 30000);
+        } else {
+            btn.classList.remove('active');
+            label.innerText = "KAPALI";
+            clearInterval(scanTimer);
+        }
+    }
+
+    function saveClick(e, isim) {
+        if(!tiklananlar.includes(isim)) {
+            tiklananlar.push(isim);
+            localStorage.setItem('kaya_30s_full_clicks', JSON.stringify(tiklananlar));
+            e.currentTarget.classList.add('visited');
+        }
+    }
+
+    function tiklamalariSifirla() {
+        if(confirm("Tüm seçim geçmişi temizlensin mi?")) {
+            localStorage.removeItem('kaya_30s_full_clicks');
+            tiklananlar = [];
+            render();
+        }
+    }
+
+    function ping(ip, id) {
+        return new Promise(resolve => {
+            const el = document.getElementById(id);
+            if(!el) return resolve();
+            el.className = "dot checking";
+            const img = new Image();
+            const t = setTimeout(() => { 
+                if(el.className === "dot checking") el.className = "dot offline"; 
+                resolve(); 
+            }, 2000);
+            img.onload = img.onerror = () => { 
+                clearTimeout(t); 
+                el.className = "dot online"; 
+                resolve(); 
+            };
+            img.src = `http://${ip}/favicon.ico?v=${Date.now()}`;
+        });
+    }
+
+    async function autoScan() {
+        const cards = Array.from(document.querySelectorAll('.card'));
+        for(let i=0; i<cards.length; i+=40) {
+            const group = cards.slice(i, i+40);
+            await Promise.all(group.map(c => ping(c.dataset.ip, c.dataset.id)));
+        }
+    }
+
+    function ara() {
+        const val = document.getElementById('search').value.toLowerCase();
+        document.querySelectorAll('.card').forEach(c => {
+            c.style.display = c.textContent.toLowerCase().includes(val) ? "flex" : "none";
+        });
+    }
+
+    render();
+    autoScan();
+    scanTimer = setInterval(autoScan, 30000);
+</script>
+</body>
+</html>
