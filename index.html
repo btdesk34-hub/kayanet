@@ -14,6 +14,7 @@
             --apple-gray: #86868b;
             --online: #28cd41;
             --offline: #ff3b30;
+            --unstable: #ffcc00;
         }
 
         * { box-sizing: border-box; margin: 0; padding: 0; -webkit-font-smoothing: antialiased; }
@@ -58,7 +59,7 @@
         #search {
             width: 100%; padding: 14px 20px; border-radius: 12px;
             border: 1px solid #d2d2d7; background: var(--apple-card);
-            font-size: 16px; outline: none; transition: 0.2s;
+            font-size: 16px; outline: none;
         }
 
         .grid { display: flex; flex-wrap: wrap; gap: 10px; padding: 5px; justify-content: flex-start; }
@@ -70,12 +71,15 @@
             border: 1px solid #d2d2d7; transition: all 0.2s;
         }
         
-        .card:hover { transform: translateY(-2px); border-color: var(--apple-blue); box-shadow: 0 8px 20px rgba(0,0,0,0.08); }
+        .card:hover { transform: translateY(-2px); border-color: var(--apple-blue); }
 
         .card-top { display: flex; align-items: center; justify-content: space-between; width: 100%; }
         .dot { width: 10px; height: 10px; border-radius: 50%; background: #c5c5c7; flex-shrink: 0; }
+        
+        /* Renk Durumları */
         .online { background: var(--online); box-shadow: 0 0 8px var(--online); }
         .offline { background: var(--offline); box-shadow: 0 0 8px var(--offline); }
+        .unstable { background: var(--unstable); box-shadow: 0 0 8px var(--unstable); animation: blink 1.5s infinite; }
         .checking { background: #ff9500; animation: blink 1s infinite; }
 
         @keyframes blink { 50% { opacity: 0.4; } }
@@ -106,7 +110,7 @@
         <div class="header-controls">
             <button class="reset-btn" title="Temizle" onclick="tiklamalariSifirla()">↺</button>
             <div id="toggleBtn" class="toggle-container active" onclick="toggleAuto()">
-                <span class="toggle-text" id="toggleLabel">OTO: 30S</span>
+                <span class="toggle-text" id="toggleLabel">OTO: 10S</span>
             </div>
         </div>
     </header>
@@ -176,6 +180,8 @@
     let tiklananlar = JSON.parse(localStorage.getItem('kaya_30s_full_clicks')) || [];
     let isAutoOn = true;
     let scanTimer;
+    let durumGecmisi = {}; // IP tabanlı son durum takibi
+    const TARAMA_HIZI = 10000; // 10 Saniye
 
     function render() {
         document.getElementById('total-count').innerText = veriler.length + " MAĞAZA";
@@ -201,40 +207,49 @@
             const el = document.getElementById(id);
             if(!el) return resolve();
             
-            el.className = "dot checking";
+            // Sadece offline olanlar için "checking" göster, online olanlarda sessizce tara
+            if (!el.classList.contains('online')) {
+                el.className = "dot checking";
+            }
             
             const img = new Image();
             let resolved = false;
 
-            // 3.5 saniye timeout (TV için güvenli süre)
             const timeout = setTimeout(() => {
                 if(!resolved) {
                     resolved = true;
-                    el.className = "dot offline";
+                    
+                    // SARI DURUM KONTROLÜ
+                    if (durumGecmisi[ip] === "online") {
+                        el.className = "dot unstable"; 
+                        durumGecmisi[ip] = "unstable";
+                    } else {
+                        el.className = "dot offline";
+                        durumGecmisi[ip] = "offline";
+                    }
+                    
                     img.src = ""; 
                     resolve();
                 }
-            }, 3500);
+            }, 2800);
 
-            // TV tarayıcılarında herhangi bir paket dönüşü (hata veya başarı)
-            // cihazın yaşadığını gösterir.
             img.onload = img.onerror = () => {
                 if(!resolved) {
                     resolved = true;
                     clearTimeout(timeout);
                     el.className = "dot online";
+                    durumGecmisi[ip] = "online";
                     resolve();
                 }
             };
 
-            // Önbelleği önlemek için benzersiz URL
-            img.src = "http://" + ip + "/favicon.ico?v=" + Date.now();
+            img.src = "http://" + ip + "/favicon.ico?v=" + new Date().getTime();
         });
     }
 
     async function autoScan() {
+        if(!isAutoOn) return;
         const cards = Array.from(document.querySelectorAll('.card'));
-        // TV işlemcisini yormamak için 15'li gruplar halinde tarıyoruz
         for(let i=0; i<cards.length; i+=15) {
             const group = cards.slice(i, i+15);
             await Promise.all(group.map(c => ping(c.dataset.ip, c.dataset.id)));
@@ -247,9 +262,9 @@
         isAutoOn = !isAutoOn;
         if(isAutoOn) {
             btn.classList.add('active');
-            label.innerText = "OTO: 30S";
+            label.innerText = "OTO: 10S";
             autoScan();
-            scanTimer = setInterval(autoScan, 30000);
+            scanTimer = setInterval(autoScan, TARAMA_HIZI);
         } else {
             btn.classList.remove('active');
             label.innerText = "KAPALI";
@@ -283,7 +298,7 @@
 
     render();
     autoScan();
-    scanTimer = setInterval(autoScan, 30000);
+    scanTimer = setInterval(autoScan, TARAMA_HIZI);
 </script>
 </body>
 </html>
