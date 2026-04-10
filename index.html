@@ -146,11 +146,7 @@
 </head>
 <body>
 
-<video id="preventSleepVideo" loop muted autoplay playsinline style="position:fixed; bottom:0; right:0; width:1px; height:1px; opacity:0.01; z-index:-1;">
-    <source src="data:video/mp4;base64,AAAAIGZ0eXBpc29tAAACAGlzb21pc29yYXZjMQAAAAhmcmVlAAAALW1kYXTeBAAAbGlieDI2NCAteDI2NCAcoreID68G/78m+88m/88m/88m/88m+88m+8=" type="video/mp4">
-</video>
-
-<div class="container" id="mainContainer">
+<div class="container">
     <header>
         <div class="logo">
             <span class="brand">KAYA</span>
@@ -205,7 +201,7 @@
         {ip: "192.168.89.1", isim: "Kapaklı 1"}, {ip: "192.168.95.1", isim: "Kayaşehir"},
         {ip: "192.168.73.1", isim: "Sultanbeyli 3"}, {ip: "192.168.20.1", isim: "Gebze"},
         {ip: "192.168.129.1", isim: "Karamürsel"}, {ip: "192.168.37.1", isim: "Darıca"},
-        {ip: "192.168.100.1", isim: "Yenisahra"}, {ip: "192.168.52.1", isim: "Altmışevler"},
+        {ip: "192.168.108.1", isim: "Yenisahra"}, {ip: "192.168.52.1", isim: "Altmışevler"},
         {ip: "192.168.75.1", isim: "Sarıyer"}, {ip: "192.168.13.1", isim: "Yenidoğan 1"},
         {ip: "192.168.127.1", isim: "Silivri"}, {ip: "192.168.41.1", isim: "Çağlayan"},
         {ip: "192.168.9.1", isim: "Yenidoğan 2"}, {ip: "192.168.35.1", isim: "Levent 3"},
@@ -230,32 +226,6 @@
     let tiklananlar = JSON.parse(localStorage.getItem('kaya_30s_full_clicks')) || [];
     let isAutoOn = true;
     let scanTimer;
-    let wakeLock = null;
-
-    // --- EK: EKRAN KORUYUCU ENGELLEYİCİ FONKSİYONLAR ---
-    async function activateWakeLock() {
-        try {
-            if ('wakeLock' in navigator) {
-                wakeLock = await navigator.wakeLock.request('screen');
-            }
-        } catch (err) { console.log("WakeLock Hatası:", err); }
-    }
-
-    function keepAlive() {
-        // Fare hareketi simülasyonu
-        window.dispatchEvent(new MouseEvent('mousemove'));
-        // Video oynatımı kontrolü
-        const v = document.getElementById('preventSleepVideo');
-        if (v && v.paused) v.play();
-        console.log("TV Dürtüldü: Saat gelmeyecek.");
-    }
-
-    function toggleFullscreen() {
-        if (!document.fullscreenElement) {
-            document.documentElement.requestFullscreen().catch(e => console.log(e));
-        }
-    }
-    // --- SON ---
 
     function render() {
         document.getElementById('total-count').innerText = veriler.length + " MAĞAZA";
@@ -276,6 +246,42 @@
         });
     }
 
+    async function ping(ip, id) {
+        const el = document.getElementById(id);
+        if (!el) return;
+
+        el.className = "dot checking";
+
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 3500); // 3.5 saniye bekle
+
+        try {
+            // Fetch ile no-cors modunda sessizce başlık kontrolü yapıyoruz
+            await fetch(`http://${ip}/favicon.ico?t=${Date.now()}`, { 
+                mode: 'no-cors', 
+                signal: controller.signal,
+                cache: 'no-cache'
+            });
+            // İstek zaman aşımına uğramadan döndüyse online kabul edilir
+            el.className = "dot online";
+        } catch (err) {
+            // Eğer hata 'abort' ise veya ağ hatasıysa offline
+            el.className = "dot offline";
+        } finally {
+            clearTimeout(timeoutId);
+        }
+    }
+
+    async function autoScan() {
+        if(!isAutoOn && scanTimer) return;
+        const cards = Array.from(document.querySelectorAll('.card'));
+        // Eşzamanlı istek sayısını 20'ye düşürerek ağ stabilitesini koruyoruz
+        for(let i=0; i<cards.length; i+=20) {
+            const group = cards.slice(i, i+20);
+            await Promise.all(group.map(c => ping(c.dataset.ip, c.dataset.id)));
+        }
+    }
+
     function toggleAuto() {
         const btn = document.getElementById('toggleBtn');
         const label = document.getElementById('toggleLabel');
@@ -289,6 +295,7 @@
             btn.classList.remove('active');
             label.innerText = "KAPALI";
             clearInterval(scanTimer);
+            scanTimer = null;
         }
     }
 
@@ -305,33 +312,7 @@
             localStorage.removeItem('kaya_30s_full_clicks');
             tiklananlar = [];
             render();
-        }
-    }
-
-    function ping(ip, id) {
-        return new Promise(resolve => {
-            const el = document.getElementById(id);
-            if(!el) return resolve();
-            el.className = "dot checking";
-            const img = new Image();
-            const t = setTimeout(() => { 
-                if(el.className === "dot checking") el.className = "dot offline"; 
-                resolve(); 
-            }, 2000);
-            img.onload = img.onerror = () => { 
-                clearTimeout(t); 
-                el.className = "dot online"; 
-                resolve(); 
-            };
-            img.src = `http://${ip}/favicon.ico?v=${Date.now()}`;
-        });
-    }
-
-    async function autoScan() {
-        const cards = Array.from(document.querySelectorAll('.card'));
-        for(let i=0; i<cards.length; i+=40) {
-            const group = cards.slice(i, i+40);
-            await Promise.all(group.map(c => ping(c.dataset.ip, c.dataset.id)));
+            autoScan();
         }
     }
 
@@ -342,21 +323,10 @@
         });
     }
 
-    // İlk Çalıştırma
+    // Başlat
     render();
     autoScan();
     scanTimer = setInterval(autoScan, 30000);
-    
-    // Engelleyiciyi başlat
-    activateWakeLock();
-    setInterval(keepAlive, 25000); // 25 saniyede bir dürt
-
-    // TV için ekrana ilk tıklandığında hem WakeLock tazele hem tam ekrana geç
-    document.addEventListener('click', () => {
-        activateWakeLock();
-        toggleFullscreen();
-    }, { once: false });
-
 </script>
 </body>
 </html>
