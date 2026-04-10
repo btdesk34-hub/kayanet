@@ -76,7 +76,6 @@
         .card-top { display: flex; align-items: center; justify-content: space-between; width: 100%; }
         .dot { width: 10px; height: 10px; border-radius: 50%; background: #c5c5c7; flex-shrink: 0; }
         
-        /* Renk Durumları */
         .online { background: var(--online); box-shadow: 0 0 8px var(--online); }
         .offline { background: var(--offline); box-shadow: 0 0 8px var(--offline); }
         .unstable { background: var(--unstable); box-shadow: 0 0 8px var(--unstable); animation: blink 1.5s infinite; }
@@ -180,8 +179,8 @@
     let tiklananlar = JSON.parse(localStorage.getItem('kaya_30s_full_clicks')) || [];
     let isAutoOn = true;
     let scanTimer;
-    let durumGecmisi = {}; // IP tabanlı son durum takibi
-    const TARAMA_HIZI = 10000; // 10 Saniye
+    let durumGecmisi = {}; 
+    const TARAMA_HIZI = 10000; 
 
     function render() {
         document.getElementById('total-count').innerText = veriler.length + " MAĞAZA";
@@ -207,8 +206,7 @@
             const el = document.getElementById(id);
             if(!el) return resolve();
             
-            // Sadece offline olanlar için "checking" göster, online olanlarda sessizce tara
-            if (!el.classList.contains('online')) {
+            if (!el.classList.contains('online') && !el.classList.contains('unstable')) {
                 el.className = "dot checking";
             }
             
@@ -218,27 +216,31 @@
             const timeout = setTimeout(() => {
                 if(!resolved) {
                     resolved = true;
-                    
-                    // SARI DURUM KONTROLÜ
-                    if (durumGecmisi[ip] === "online") {
-                        el.className = "dot unstable"; 
-                        durumGecmisi[ip] = "unstable";
-                    } else {
-                        el.className = "dot offline";
-                        durumGecmisi[ip] = "offline";
-                    }
-                    
+                    el.className = "dot offline";
+                    durumGecmisi[ip] = "offline";
                     img.src = ""; 
                     resolve();
                 }
-            }, 2800);
+            }, 2500);
 
-            img.onload = img.onerror = () => {
+            // TAM BAŞARI: Sadece dosya gelirse yeşil yak
+            img.onload = () => {
                 if(!resolved) {
                     resolved = true;
                     clearTimeout(timeout);
                     el.className = "dot online";
                     durumGecmisi[ip] = "online";
+                    resolve();
+                }
+            };
+
+            // HATA: Cihaz var ama dosya gelmiyorsa (Bağlantı şüpheli) SARI yap
+            img.onerror = () => {
+                if(!resolved) {
+                    resolved = true;
+                    clearTimeout(timeout);
+                    el.className = "dot unstable";
+                    durumGecmisi[ip] = "unstable";
                     resolve();
                 }
             };
