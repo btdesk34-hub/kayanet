@@ -35,23 +35,13 @@
         }
 
         .logo { grid-column: 2; text-align: center; }
-        .logo .brand { 
-            font-size: 26px; 
-            font-weight: 800; 
-            letter-spacing: -1px; 
-            color: var(--apple-blue); 
-        }
+        .logo .brand { font-size: 26px; font-weight: 800; letter-spacing: -1px; color: var(--apple-blue); }
         .logo .sub { font-size: 10px; font-weight: 700; color: var(--apple-gray); text-transform: uppercase; letter-spacing: 3px; display: block; margin-top: -3px; }
         
         .shop-count {
-            font-size: 11px;
-            font-weight: 800;
-            color: #ffffff;
-            background: var(--apple-text);
-            padding: 2px 10px;
-            border-radius: 20px;
-            display: inline-block;
-            margin-top: 5px;
+            font-size: 11px; font-weight: 800; color: #ffffff;
+            background: var(--apple-text); padding: 2px 10px; border-radius: 20px;
+            display: inline-block; margin-top: 5px;
         }
 
         .header-controls { grid-column: 3; justify-self: end; display: flex; align-items: center; gap: 10px; }
@@ -69,41 +59,20 @@
             width: 100%; padding: 14px 20px; border-radius: 12px;
             border: 1px solid #d2d2d7; background: var(--apple-card);
             font-size: 16px; outline: none; transition: 0.2s;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.02);
         }
-        #search:focus { border-color: var(--apple-blue); box-shadow: 0 0 0 4px rgba(0,113,227,0.1); }
 
-        .grid {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 10px;
-            padding: 5px;
-            justify-content: flex-start;
-        }
+        .grid { display: flex; flex-wrap: wrap; gap: 10px; padding: 5px; justify-content: flex-start; }
 
         .card {
-            width: calc(11.11% - 9px); 
-            background: var(--apple-card); 
-            border-radius: 10px; 
-            padding: 12px 14px;
-            text-decoration: none; 
-            color: inherit; 
-            display: flex; 
-            flex-direction: column;
-            gap: 6px;
-            border: 1px solid #d2d2d7;
-            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            width: calc(11.11% - 9px); background: var(--apple-card); 
+            border-radius: 10px; padding: 12px 14px; text-decoration: none; 
+            color: inherit; display: flex; flex-direction: column; gap: 6px;
+            border: 1px solid #d2d2d7; transition: all 0.2s;
         }
         
-        .card:hover { 
-            transform: translateY(-2px); 
-            z-index: 10; 
-            border-color: var(--apple-blue); 
-            box-shadow: 0 8px 20px rgba(0,0,0,0.08); 
-        }
+        .card:hover { transform: translateY(-2px); border-color: var(--apple-blue); box-shadow: 0 8px 20px rgba(0,0,0,0.08); }
 
         .card-top { display: flex; align-items: center; justify-content: space-between; width: 100%; }
-
         .dot { width: 10px; height: 10px; border-radius: 50%; background: #c5c5c7; flex-shrink: 0; }
         .online { background: var(--online); box-shadow: 0 0 8px var(--online); }
         .offline { background: var(--offline); box-shadow: 0 0 8px var(--offline); }
@@ -111,29 +80,10 @@
 
         @keyframes blink { 50% { opacity: 0.4; } }
 
-        .name { 
-            font-weight: 700; 
-            font-size: 14px; 
-            white-space: nowrap; 
-            overflow: hidden; 
-            text-overflow: ellipsis; 
-            color: var(--apple-text);
-        }
-
-        .ip-badge { 
-            font-size: 10px; 
-            font-weight: 700; 
-            color: var(--apple-gray); 
-            background: #f2f2f7; 
-            padding: 3px 6px; 
-            border-radius: 5px;
-            align-self: flex-start;
-        }
-
+        .name { font-weight: 700; font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .ip-badge { font-size: 10px; font-weight: 700; color: var(--apple-gray); background: #f2f2f7; padding: 3px 6px; border-radius: 5px; align-self: flex-start; }
         .card.visited { opacity: 0.4; filter: grayscale(1); border-style: dashed; }
-
-        .reset-btn { font-size: 20px; cursor: pointer; color: var(--apple-gray); border: none; background: none; transition: 0.2s; }
-        .reset-btn:hover { color: var(--apple-text); transform: rotate(-90deg); }
+        .reset-btn { font-size: 20px; cursor: pointer; color: var(--apple-gray); border: none; background: none; }
 
         @media (max-width: 1800px) { .card { width: calc(12.5% - 9px); } }
         @media (max-width: 1500px) { .card { width: calc(14.28% - 9px); } }
@@ -162,10 +112,10 @@
     </header>
 
     <div class="search-area">
-        <input type="text" id="search" placeholder="Şube ismi veya IP yazın..." onkeyup="ara()">
+        <input type="text" id="search" placeholder="Şube ismi veya IP..." onkeyup="ara()">
     </div>
 
-    <div class="grid" id="liste"></div>
+    <div id="liste" class="grid"></div>
 </div>
 
 <script>
@@ -246,38 +196,47 @@
         });
     }
 
-    async function ping(ip, id) {
-        const el = document.getElementById(id);
-        if (!el) return;
+    function ping(ip, id) {
+        return new Promise(resolve => {
+            const el = document.getElementById(id);
+            if(!el) return resolve();
+            
+            el.className = "dot checking";
+            
+            const img = new Image();
+            let resolved = false;
 
-        el.className = "dot checking";
+            // 3.5 saniye timeout (TV için güvenli süre)
+            const timeout = setTimeout(() => {
+                if(!resolved) {
+                    resolved = true;
+                    el.className = "dot offline";
+                    img.src = ""; 
+                    resolve();
+                }
+            }, 3500);
 
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 3500); // 3.5 saniye bekle
+            // TV tarayıcılarında herhangi bir paket dönüşü (hata veya başarı)
+            // cihazın yaşadığını gösterir.
+            img.onload = img.onerror = () => {
+                if(!resolved) {
+                    resolved = true;
+                    clearTimeout(timeout);
+                    el.className = "dot online";
+                    resolve();
+                }
+            };
 
-        try {
-            // Fetch ile no-cors modunda sessizce başlık kontrolü yapıyoruz
-            await fetch(`http://${ip}/favicon.ico?t=${Date.now()}`, { 
-                mode: 'no-cors', 
-                signal: controller.signal,
-                cache: 'no-cache'
-            });
-            // İstek zaman aşımına uğramadan döndüyse online kabul edilir
-            el.className = "dot online";
-        } catch (err) {
-            // Eğer hata 'abort' ise veya ağ hatasıysa offline
-            el.className = "dot offline";
-        } finally {
-            clearTimeout(timeoutId);
-        }
+            // Önbelleği önlemek için benzersiz URL
+            img.src = "http://" + ip + "/favicon.ico?v=" + Date.now();
+        });
     }
 
     async function autoScan() {
-        if(!isAutoOn && scanTimer) return;
         const cards = Array.from(document.querySelectorAll('.card'));
-        // Eşzamanlı istek sayısını 20'ye düşürerek ağ stabilitesini koruyoruz
-        for(let i=0; i<cards.length; i+=20) {
-            const group = cards.slice(i, i+20);
+        // TV işlemcisini yormamak için 15'li gruplar halinde tarıyoruz
+        for(let i=0; i<cards.length; i+=15) {
+            const group = cards.slice(i, i+15);
             await Promise.all(group.map(c => ping(c.dataset.ip, c.dataset.id)));
         }
     }
@@ -295,7 +254,6 @@
             btn.classList.remove('active');
             label.innerText = "KAPALI";
             clearInterval(scanTimer);
-            scanTimer = null;
         }
     }
 
@@ -308,7 +266,7 @@
     }
 
     function tiklamalariSifirla() {
-        if(confirm("Tüm seçim geçmişi temizlensin mi?")) {
+        if(confirm("Sıfırlansın mı?")) {
             localStorage.removeItem('kaya_30s_full_clicks');
             tiklananlar = [];
             render();
@@ -323,7 +281,6 @@
         });
     }
 
-    // Başlat
     render();
     autoScan();
     scanTimer = setInterval(autoScan, 30000);
